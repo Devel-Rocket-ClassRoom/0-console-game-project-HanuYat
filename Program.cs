@@ -1,1 +1,1 @@
-return;
+new BattleShipGame().Run();
