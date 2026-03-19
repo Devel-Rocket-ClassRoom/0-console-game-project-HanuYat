@@ -1,18 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
 using Framework.Engine;
 
 public class BattleShipGame : GameApp
 {
-    private SceneManager<Scene> _sceneManager = new SceneManager<Scene>();
+    private readonly SceneManager<Scene> _scenes = new SceneManager<Scene>();
 
-    public BattleShipGame() : base(40, 40)
+    public BattleShipGame() : base(80, 35)
     {        
     }
 
     public BattleShipGame(int width, int height) : base(width, height)
     {
-    }    
+    }
 
     protected override void Initialize()
     {
@@ -21,26 +20,38 @@ public class BattleShipGame : GameApp
 
     protected override void Update(float deltaTime)
     {
-        ChangeToShipPlacement();
-        ChangeToBattle();
+        if (Input.IsKeyDown(ConsoleKey.Escape))
+        {
+            Quit();
+            return;
+        }
+
+        _scenes.CurrentScene?.Update(deltaTime);
     }
 
     protected override void Draw()
     {
+        _scenes.CurrentScene?.Draw(Buffer);
     }
 
-    private void ChangeToTitle()
+    protected void ChangeToTitle()
     {
-        var title = new TitleScene();        
+        var title = new TitleScene();
+        title.StartRequested += ChangeToShipPlacement;
+        _scenes.ChangeScene(title);
     }
 
-    private void ChangeToBattle()
+    protected void ChangeToShipPlacement()
     {
-
+        var shipPlacement = new ShipPlacementScene();
+        shipPlacement.GotoBattleRequested += ChangeToBattle;
+        _scenes.ChangeScene(shipPlacement);
     }
 
-    private void ChangeToShipPlacement()
+    protected void ChangeToBattle()
     {
-
-    }
+        var battle = new BattleScene();
+        battle.PlayAgainRequested += ChangeToTitle;
+        _scenes.ChangeScene(battle);
+    }   
 }
