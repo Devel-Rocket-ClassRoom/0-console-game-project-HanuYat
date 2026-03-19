@@ -99,7 +99,7 @@ public class ShipPlacementScene : Scene
             buffer.WriteText(6, Board.k_Height + 5, "Arrow Keys & Enter: Choose Ship & Place", ConsoleColor.Yellow);
             if (!_canPlace && _errorTimer > 0)
             {
-                buffer.WriteText(6, Board.k_Height + 6, "Alreay Placed!", ConsoleColor.Red);                
+                buffer.WriteText(6, Board.k_Height + 6, "Already Placed!", ConsoleColor.Red);                
             }
         }
         else
