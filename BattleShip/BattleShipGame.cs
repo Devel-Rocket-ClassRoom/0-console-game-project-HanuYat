@@ -6,7 +6,7 @@ public class BattleShipGame : GameApp
     private readonly SceneManager<Scene> _scenes = new SceneManager<Scene>();
 
     public BattleShipGame() : base(90, 35)
-    {        
+    {
     }
 
     public BattleShipGame(int width, int height) : base(width, height)
@@ -18,7 +18,7 @@ public class BattleShipGame : GameApp
         ChangeToTitle();
     }
 
-    protected override void Update(float deltaTime)
+    protected override void Update(float deltaTime)                                                            
     {
         if (Input.IsKeyDown(ConsoleKey.Escape))
         {

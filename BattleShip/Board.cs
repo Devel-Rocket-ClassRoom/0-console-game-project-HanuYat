@@ -23,6 +23,8 @@ public class Board : GameObject
 
     public Board(Scene scene, int startX, int startY, bool isVisible) : base(scene)
     {
+        Name = "Board";
+
         _startX = startX;
         _startY = startY;
         _isVisible = isVisible;

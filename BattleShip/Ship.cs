@@ -14,6 +14,7 @@ public class Ship : GameObject
 
     public Ship(Scene scene) : base(scene)
     {
+        Name = "Ship";
         CurrentSize = _shipSizes.Small;
     }
 
