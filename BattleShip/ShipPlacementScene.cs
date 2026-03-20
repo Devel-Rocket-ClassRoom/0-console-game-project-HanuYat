@@ -5,7 +5,7 @@ using Framework.Engine;
 public class ShipPlacementScene : Scene
 {
     private Board _board;    
-    private Ship _ship;
+    private Ship _attack;
 
     public const int _maxShip = 6;
     private int _count = 0;
@@ -17,10 +17,10 @@ public class ShipPlacementScene : Scene
     public event GameAction GotoBattleRequested;
     public override void Load()
     {
-        _board = new Board(this);
+        _board = new Board(this, 6, 2);
         AddGameObject(_board);        
-        _ship = new Ship(this);
-        AddGameObject(_ship);
+        _attack = new Ship(this);
+        AddGameObject(_attack);
 
         _shipsToPlace.Enqueue(1);
         _shipsToPlace.Enqueue(3);
@@ -39,7 +39,7 @@ public class ShipPlacementScene : Scene
     {
         UpdateGameObjects(deltaTime);
 
-        if (!_ship.IsActive)
+        if (!_attack.IsActive)
         {
             if (Input.IsKeyDown(ConsoleKey.Enter))
             {
@@ -53,37 +53,34 @@ public class ShipPlacementScene : Scene
         if (Input.IsKeyDown(ConsoleKey.Enter))
         {
             bool isOverlap = false;
-            for (int i = 0; i < _ship.CurrentSize; i++)
+            for (int i = 0; i < _attack.CurrentSize; i++)
             {
-                int checkX = _ship.IsHorizontal ? _ship.X + i : _ship.X;
-                int checkY = _ship.IsHorizontal ? _ship.Y : _ship.Y + i;
+                int checkX = _attack.IsHorizontal ? _attack.X + i : _attack.X;
+                int checkY = _attack.IsHorizontal ? _attack.Y : _attack.Y + i;
 
-                if (checkX >= Board.k_Width || checkY >= Board.k_Height)
+                if (checkX >= Board.k_Width || checkY >= Board.k_Height || _board.Sea[checkX, checkY] == CellState.Ship)
                 {
-                    isOverlap = true;
-                    break;
-                }
-                if (_board.Sea[checkX, checkY] == CellState.Ship)
-                {
-                    _canPlace = false;
                     isOverlap = true;
                     break;
                 }
             }
 
-            if (!_canPlace && isOverlap)
+            if (isOverlap)
             {
-                _errorTimer = 2.0f;
                 _canPlace = false;
-                return;
+                _errorTimer = 2.0f;
             }
+            else
+            {
+                _canPlace = true;
                 _errorTimer = 0f;
 
-                bool success = _board.HasPlaceShip(_ship.X, _ship.Y, _ship.CurrentSize, _ship.IsHorizontal);
+                bool success = _board.HasPlaceShip(_attack.X, _attack.Y, _attack.CurrentSize, _attack.IsHorizontal);
                 if (success)
                 {
                     PrepareNextShip();
                 }
+            }
         }
     }
 
@@ -92,7 +89,7 @@ public class ShipPlacementScene : Scene
         DrawGameObjects(buffer);
 
         buffer.WriteText(6, 0, "=== Ship Placement Phase ===", ConsoleColor.Green);
-        if (_ship.IsActive)
+        if (_attack.IsActive)
         {
             buffer.WriteText(6, Board.k_Height + 3, "1, 2, 3: Choose ShipSize", ConsoleColor.Gray);
             buffer.WriteText(6, Board.k_Height + 4, "R: Rotate Ship", ConsoleColor.Gray);
@@ -111,39 +108,39 @@ public class ShipPlacementScene : Scene
 
     private void HandleInput()
     {
-        if ((Input.IsKeyDown(ConsoleKey.UpArrow) || Input.IsKey(ConsoleKey.UpArrow)) && _ship.Y > 0)
+        if ((Input.IsKeyDown(ConsoleKey.UpArrow) || Input.IsKey(ConsoleKey.UpArrow)) && _attack.Y > 0)
         {
-            _ship.Y--;
+            _attack.Y--;
         }
-        if ((Input.IsKeyDown(ConsoleKey.DownArrow) || Input.IsKey(ConsoleKey.DownArrow)) && _ship.Y < Board.k_Height - 1)
+        if ((Input.IsKeyDown(ConsoleKey.DownArrow) || Input.IsKey(ConsoleKey.DownArrow)) && _attack.Y < Board.k_Height - 1)
         {
-            _ship.Y++;
+            _attack.Y++;
         }
-        if ((Input.IsKeyDown(ConsoleKey.LeftArrow) || Input.IsKey(ConsoleKey.LeftArrow)) && _ship.X > 0)
+        if ((Input.IsKeyDown(ConsoleKey.LeftArrow) || Input.IsKey(ConsoleKey.LeftArrow)) && _attack.X > 0)
         {
-            _ship.X--;
+            _attack.X--;
         }
-        if ((Input.IsKeyDown(ConsoleKey.RightArrow) || Input.IsKey(ConsoleKey.RightArrow)) && _ship.X < Board.k_Width - 1)
+        if ((Input.IsKeyDown(ConsoleKey.RightArrow) || Input.IsKey(ConsoleKey.RightArrow)) && _attack.X < Board.k_Width - 1)
         {
-            _ship.X++;
+            _attack.X++;
         }
 
         if (Input.IsKeyDown(ConsoleKey.D1))
         {
-            _ship.SetSize(1);
+            _attack.SetSize(1);
         }
         if (Input.IsKeyDown(ConsoleKey.D2))
         {
-            _ship.SetSize(3);
+            _attack.SetSize(3);
         }
         if (Input.IsKeyDown(ConsoleKey.D3))
         {
-            _ship.SetSize(5);
+            _attack.SetSize(5);
         }
 
         if (Input.IsKeyDown(ConsoleKey.R))
         {
-            _ship.Rotate();
+            _attack.Rotate();
         }
     }
 
@@ -152,11 +149,11 @@ public class ShipPlacementScene : Scene
         if (_count < _maxShip)
         {
             int nextSize = _shipsToPlace.Peek();
-            _ship.SetSize(nextSize);            
+            _attack.SetSize(nextSize);            
         }
         else
         {
-            _ship.IsActive = false;
+            _attack.IsActive = false;
         }
         _count++;
     }

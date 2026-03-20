@@ -6,8 +6,8 @@ public class Board : GameObject
     public const int k_Width = 40;
     public const int k_Height = 10;
     
-    private readonly int _startX = 6;
-    private readonly int _startY = 2;
+    private int _startX;
+    private int _startY;
     private float _waveTimer = 0f;
 
     private readonly CellState[,] _sea;
@@ -17,8 +17,11 @@ public class Board : GameObject
     public int StartX => _startX;
     public int StartY => _startY;
 
-    public Board(Scene scene) : base(scene)
+    public Board(Scene scene, int startX, int startY) : base(scene)
     {
+        _startX = startX;
+        _startY = startY;
+
         _sea = new CellState[k_Width, k_Height];
         _shipColor = new ConsoleColor[k_Width, k_Height];
 
@@ -83,6 +86,7 @@ public class Board : GameObject
                     case CellState.Miss:
                         icon = 'O';
                         fg = ConsoleColor.White;
+                        bg = ConsoleColor.DarkGray;
                         break;
                 }
 

@@ -5,7 +5,7 @@ public class BattleShipGame : GameApp
 {
     private readonly SceneManager<Scene> _scenes = new SceneManager<Scene>();
 
-    public BattleShipGame() : base(80, 35)
+    public BattleShipGame() : base(100, 35)
     {        
     }
 
