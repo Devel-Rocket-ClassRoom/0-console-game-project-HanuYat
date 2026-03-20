@@ -12,19 +12,19 @@ public class ShipPlacementScene : Scene
     private bool _canPlace = true;
     private float _errorTimer = 2f;
     
-    private Queue<int> _shipsToPlace = new Queue<int>();
-
+    private Stack<int> _shipsToPlace = new Stack<int>();
+    
     public event GameAction GotoBattleRequested;
     public override void Load()
     {
-        _board = new Board(this, 6, 2);
+        _board = new Board(this, 6, 2, true);
         AddGameObject(_board);        
         _attack = new Ship(this);
         AddGameObject(_attack);
 
-        _shipsToPlace.Enqueue(1);
-        _shipsToPlace.Enqueue(3);
-        _shipsToPlace.Enqueue(5);
+        _shipsToPlace.Push(5);
+        _shipsToPlace.Push(3);
+        _shipsToPlace.Push(1);
 
         PrepareNextShip();
 
@@ -91,7 +91,7 @@ public class ShipPlacementScene : Scene
         buffer.WriteText(6, 0, "=== Ship Placement Phase ===", ConsoleColor.Green);
         if (_attack.IsActive)
         {
-            buffer.WriteText(6, Board.k_Height + 3, "1, 2, 3: Choose ShipSize", ConsoleColor.Gray);
+            buffer.WriteText(6, Board.k_Height + 3, "(1, 2, 3): Choose The Size of Ship", ConsoleColor.Gray);
             buffer.WriteText(6, Board.k_Height + 4, "R: Rotate Ship", ConsoleColor.Gray);
             buffer.WriteText(6, Board.k_Height + 5, "Arrow Keys & Enter: Choose Ship & Place", ConsoleColor.Yellow);
             if (!_canPlace && _errorTimer > 0)
@@ -156,5 +156,10 @@ public class ShipPlacementScene : Scene
             _attack.IsActive = false;
         }
         _count++;
+    }
+
+    public Board GetBoard()
+    {
+        return _board;
     }
 }

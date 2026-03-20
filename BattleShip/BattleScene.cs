@@ -9,22 +9,33 @@ public class BattleScene : Scene
     private int _attackX = 0;
     private int _attackY = 0;
 
+    private int _playerRemainShip = ShipPlacementScene._maxShip;
+    private int _enemyRemainShip = ShipPlacementScene._maxShip;
+
     private string _turnMessage = string.Empty;
     private string _battleMessage = string.Empty;
 
     private bool _isPlayerTurn = true;
     private bool _isHit = false;
+    private bool _isGameOver = false;
 
     private float _attackTimer = 0f;
+
+    private CellState[,] _playerSea;
+    private ConsoleColor[,] _playerColor;
 
     public event GameAction PlayAgainRequested;
 
     public override void Load()
     {
-        _playerBoard = new Board(this, 6, 2);
+        _playerBoard = new Board(this, 6, 2, true);
+        if (_playerSea != null && _playerColor != null)
+        {
+            _playerBoard.CopyBoardData(_playerSea, _playerColor);
+        }
         AddGameObject(_playerBoard);
 
-        _enemyBoard = new Board(this, 50, 2);        
+        _enemyBoard = new Board(this, 50, 2, false);        
         AddGameObject(_enemyBoard);
         SetEnemyShips();
     }
@@ -37,6 +48,28 @@ public class BattleScene : Scene
     public override void Update(float deltaTime)
     {
         UpdateGameObjects(deltaTime);
+
+        if (!_enemyBoard.HasRemainingShips())
+        {
+            _isGameOver = true;
+
+            if (Input.IsKeyDown(ConsoleKey.Enter))
+            {
+                PlayAgainRequested?.Invoke();
+            }
+            return;
+        }
+
+        if (!_playerBoard.HasRemainingShips())
+        {
+            _isGameOver = true;
+
+            if (Input.IsKeyDown(ConsoleKey.Enter))
+            {
+                PlayAgainRequested?.Invoke();
+            }
+            return;
+        }
 
         if (_attackTimer > 0)
         {
@@ -65,22 +98,30 @@ public class BattleScene : Scene
         DrawGameObjects(buffer);
 
         buffer.WriteText(6, 0, "=== Battle Phase ===", ConsoleColor.DarkMagenta);
-        buffer.WriteText(_playerBoard.StartX, _playerBoard.StartY - 1, "[ PLAYER BOARD ]", ConsoleColor.White);        
+        buffer.WriteText(_playerBoard.StartX, _playerBoard.StartY - 1, $"[ PLAYER BOARD ] (REMAINING SHIP: {_playerRemainShip})", ConsoleColor.White);
+        buffer.WriteText(_enemyBoard.StartX, _enemyBoard.StartY - 1, $"[ ENEMY BOARD ] (REMAINING SHIP: {_enemyRemainShip})", ConsoleColor.DarkRed);
 
-        // 2. 적 보드 그리기 (오른쪽으로 밀어서 그리기)
-        // Board 클래스를 수정하지 않으려면 Draw 내부의 좌표 계산에 오프셋을 더해야 합니다.
-        // 여기서는 개념적으로 아래에 그리거나, 좌표를 인자로 받는 Draw를 Board에 추가해야 합니다.
-        buffer.WriteText(_enemyBoard.StartX, _enemyBoard.StartY - 1, "[ ENEMY BOARD ]", ConsoleColor.DarkRed);
-
-        if (_isPlayerTurn)
+        if (!_enemyBoard.HasRemainingShips() && _isGameOver)
+        {
+            buffer.WriteText(6, Board.k_Height + 7, "~* CONGRATULATIONS! YOU WIN!! *~", ConsoleColor.Cyan);
+            buffer.WriteText(6, Board.k_Height + 8, ">> PRESS ENTER TO RETURN TO TITLE <<", ConsoleColor.DarkYellow);
+        }
+        else if (!_playerBoard.HasRemainingShips() && _isGameOver)
+        {
+            buffer.WriteText(6, Board.k_Height + 7, "YOU LOSE..... :(", ConsoleColor.Magenta);
+            buffer.WriteText(6, Board.k_Height + 8, ">> PRESS ENTER TO RETURN TO TITLE <<", ConsoleColor.DarkYellow);
+        }
+        else if (_isPlayerTurn)
         {
             buffer.SetCell(_enemyBoard.StartX + _attackX, _enemyBoard.StartY + _attackY, '+', ConsoleColor.Yellow, ConsoleColor.DarkRed);
         }
         
+        string guideMessage = _isPlayerTurn ? "(Arrow Keys: Move, Enter: Attack)" : "";
         _turnMessage = _isPlayerTurn ? "- YOUR TURN -" : "- ENEMY TURN -";
-        buffer.WriteText(6, 13, "==================================================================", ConsoleColor.Gray);
-        buffer.WriteText(6, 14, _turnMessage, _isPlayerTurn ? ConsoleColor.White : ConsoleColor.DarkRed);
-        buffer.WriteText(6, 15, _battleMessage, _isPlayerTurn ? ConsoleColor.Yellow : ConsoleColor.Magenta);
+        buffer.WriteText(6, Board.k_Height + 3, "====================================================================================", ConsoleColor.Gray);
+        buffer.WriteText(6, Board.k_Height + 4, _turnMessage, _isPlayerTurn ? ConsoleColor.White : ConsoleColor.DarkRed);
+        buffer.WriteText(23, Board.k_Height + 4, guideMessage, ConsoleColor.DarkGray);
+        buffer.WriteText(6, Board.k_Height + 5, _battleMessage, _isPlayerTurn ? ConsoleColor.Yellow : ConsoleColor.Magenta);
     }
 
     private void SetEnemyShips()
@@ -145,8 +186,23 @@ public class BattleScene : Scene
         if (Input.IsKeyDown(ConsoleKey.Enter))
         {
             _isHit = _enemyBoard.Attack(_attackX, _attackY);
-            _battleMessage = _isHit ? "HIT! YOU ATTACK THE ENEMY SHIP!!" : "MISS.....";
-                        
+            if (_isHit)
+            {
+                if (_enemyBoard.IsShipSunk(_attackX, _attackY))
+                {
+                    _enemyRemainShip--;
+                    _battleMessage = "HIT & SUNK! THE ENEMY SHIP DESTROYED!";
+                }
+                else
+                {
+                    _battleMessage = "HIT! YOU ATTACK THE ENEMY SHIP!!";
+                }
+            }
+            else
+            {
+                _battleMessage = "MISS.....";
+            }
+            
             _attackTimer = 1.5f;
         }
     }
@@ -157,9 +213,43 @@ public class BattleScene : Scene
         int X = rand.Next(Board.k_Width); 
         int Y = rand.Next(Board.k_Height);
 
-        _isHit = _playerBoard.Attack(X, Y);
-        _battleMessage = _isHit? "OH NO! ENEMY HIT THE PLAYER SHIP..." : "ENEMY HAS MISSED!";
+        while (true)
+        {
+            X = rand.Next(Board.k_Width);
+            Y = rand.Next(Board.k_Height);
 
+            CellState targetState = _playerBoard.Sea[X, Y];
+
+            if (targetState == CellState.Empty || targetState == CellState.Ship)
+            {
+                break;
+            }
+        }
+
+        _isHit = _playerBoard.Attack(X, Y);
+        if (_isHit)
+        {
+            if (_playerBoard.IsShipSunk(X, Y))
+            {
+                _playerRemainShip--;
+                _battleMessage = "OH NO! YOUR SHIP WAS SUNK...";
+            }
+            else
+            {
+                _battleMessage = "OH NO! ENEMY HIT THE PLAYER SHIP...";
+            }
+        }
+        else
+        {
+            _battleMessage = "ENEMY HAS MISSED!";
+        }
+        
         _attackTimer = 2.5f;
+    }
+
+    public void SetPlayerSea(CellState[,] sea, ConsoleColor[,] colors)
+    {
+        _playerSea = sea;
+        _playerColor = colors;
     }
 }

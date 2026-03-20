@@ -5,7 +5,7 @@ public class BattleShipGame : GameApp
 {
     private readonly SceneManager<Scene> _scenes = new SceneManager<Scene>();
 
-    public BattleShipGame() : base(100, 35)
+    public BattleShipGame() : base(90, 35)
     {        
     }
 
@@ -44,13 +44,21 @@ public class BattleShipGame : GameApp
     protected void ChangeToShipPlacement()
     {
         var shipPlacement = new ShipPlacementScene();
-        shipPlacement.GotoBattleRequested += ChangeToBattle;
+
+
+        shipPlacement.GotoBattleRequested += () =>
+        {
+            var board = shipPlacement.GetBoard();
+            ChangeToBattle(board.Sea, board.ShipColor);
+        };
+
         _scenes.ChangeScene(shipPlacement);
     }
 
-    protected void ChangeToBattle()
+    protected void ChangeToBattle(CellState[,] playerSea, ConsoleColor[,] colors)
     {
         var battle = new BattleScene();
+        battle.SetPlayerSea(playerSea, colors);
         battle.PlayAgainRequested += ChangeToTitle;
         _scenes.ChangeScene(battle);
     }   

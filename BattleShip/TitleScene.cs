@@ -27,7 +27,7 @@ public class TitleScene : Scene
         buffer.WriteTextCentered(5, "  ┏━┃┏━┃ ┃  ┃ ┃  ┏━┛  ━━┃┏━┃┃┏━┛", ConsoleColor.Cyan);
         buffer.WriteTextCentered(6, "━━ ┛ ┛ ┛  ┛ ━━┛━━┛  ━━┛┛ ┛┛┛", ConsoleColor.Cyan);
         buffer.WriteTextCentered(8, "  Eliminate Your ENEMY", ConsoleColor.DarkRed);        
-        buffer.WriteTextCentered(13, "  Arrow Keys & Enter: Control");
+        buffer.WriteTextCentered(13, "  Arrow Keys & Enter & R: Control");
         buffer.WriteTextCentered(15, "  ESC: Quit", ConsoleColor.DarkGray);
         buffer.WriteTextCentered(17, "  Press ENTER to Start", ConsoleColor.Yellow);
     }    
